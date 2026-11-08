@@ -1,0 +1,43 @@
+name: Build OpenRoads APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build OpenRoads APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r25c
+
+      - name: Build Web APK
+        working-directory: ./android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleWebDebug --no-daemon
+
+      - name: Stage OpenRoads APK
+        run: |
+          mkdir -p output
+          find android/ -name "*Web-debug*.apk" -o -name "*web-debug*.apk" -exec cp {} output/OpenRoads.apk \;
+
+      - name: Upload OpenRoads APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenRoads.apk
+          path: output/OpenRoads.apk
